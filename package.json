@@ -1,6 +1,6 @@
 {
   "name": "gitbook-plugin-halapro",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "gitbook plugin",
   "main": "index.js",
   "keywords": [
