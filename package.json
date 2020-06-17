@@ -12,5 +12,9 @@
   "engines": {
     "gitbook": ">2.5.0"
   },
-  "homepage": "https://github.com/halaproliu/gitbook-plugin-halapro"
+  "homepage": "https://github.com/halaproliu/gitbook-plugin-halapro",
+  "dependencies": {
+    "cheerio": "^1.0.0-rc.3",
+    "jquery": "^3.5.1"
+  }
 }
