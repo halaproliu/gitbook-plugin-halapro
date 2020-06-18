@@ -1,71 +1,5 @@
 var code, router, config
-
-timeouts = {}
-function Code (config, $) {
-    this.config = config || {}
-    this.$ = $
-}
-
-Code.prototype.init = function (block) {
-    code = block.children('code')
-    lines = code.html().split('\n')
-
-    if (lines[lines.length - 1] == '') {
-        lines.splice(-1, 1)
-    }
-
-    if (lines.length > 1) {
-        lines = lines.map(line => {
-            if (/\/\*\*/.test(line)) {
-                return '<span class="code-line">' + line + '</span></span>'
-            } else if (/\*\//.test(line)) {
-                return '<span class="code-line"><span class="token comment">' + line + '</span>'
-            } else {
-                return (
-                    '<span class="code-line"><span class="token comment">' +
-                    line +
-                    '</span></span>'
-                )
-            }
-        })
-        code.html(lines.join('\n'))
-    }
-
-    // Add wrapper to pre element
-    wrapper = block.wrap('<div class="code-wrapper"></div>')
-
-    if (this.config.copyButtons) {
-        this.addCopyButton(wrapper, this.$)
-    }
-}
-
-Code.prototype.addCopyButton = function (wrapper, $) {
-    var vm = this
-    wrapper.append(
-        $('<i class="fa fa-clone t-copy"></i>').click(function () {
-            vm.copyCommand($(this))
-        })
-    )
-}
-
-Code.prototype.updateCopyButton = function (button) {
-    id = button.attr('data-command')
-    button.removeClass('fa-clone').addClass('fa-check')
-
-    // Clear timeout
-    if (id in timeouts) {
-        clearTimeout(timeouts[id])
-    }
-    timeouts[id] = window.setTimeout(function () {
-        button.removeClass('fa-check').addClass('fa-clone')
-    }, 1000)
-}
-
-Code.prototype.addCopyTextarea = function () {
-    if (this.config.copyButtons) {
-        this.$('body').append('<textarea id="code-textarea" />')
-    }
-}
+var timeouts = {}
 
 function Router (config, $) {
     this.config = config || {}
@@ -83,7 +17,8 @@ Router.prototype.init = function () {
         var url = ''
         if (path) {
             if (path === './') { // 一级标题
-                url = resolve(baseUrl)
+                var folder = $(this).children('a').text().replace(/\s/g, '')
+                url = resolve(baseUrl, folder)
             } else if (path === '../') {
                 var folder = $(this).children('a').text().replace(/\s/g, '')
                 if (folder !== 'Introduction') {
@@ -118,10 +53,81 @@ function initPlugin (pluginConfig) {
 }
 
 require(['gitbook', 'jQuery'], function (gitbook, $) {
+    function formatBlockCode (block) {
+        code = block.children('code')
+        lines = code.html().split('\n')
+
+        if (lines[lines.length - 1] == '') {
+            lines.splice(-1, 1)
+        }
+
+        if (lines.length > 1) {
+            lines = lines.map(line => {
+                if (/\/\*\*/.test(line)) {
+                    return '<span class="code-line">' + line + '</span></span>'
+                } else if (/\*\//.test(line)) {
+                    return '<span class="code-line"><span class="token comment">' + line + '</span>'
+                } else {
+                    return (
+                        '<span class="code-line"><span class="token comment">' +
+                        line +
+                        '</span></span>'
+                    )
+                }
+            })
+            code.html(lines.join('\n'))
+        }
+
+        // Add wrapper to pre element
+        wrapper = block.wrap('<div class="code-wrapper"></div>')
+
+        if (config.code && config.code.copyButtons) {
+            addCopyButton(wrapper)
+        }
+    }
+
+    function addCopyButton (wrapper) {
+        wrapper.append(
+            $('<i class="fa fa-clone t-copy"></i>').click(function () {
+                copyCommand($(this))
+            })
+        )
+    }
+
+    function addCopyTextarea () {
+        $('body').append('<textarea id="code-textarea" />')
+    }
+
+    function copyCommand (button) {
+        pre = button.parent();
+        textarea = $('#code-textarea');
+        textarea.val(pre.text());
+        textarea.focus();
+        textarea.select();
+        document.execCommand('copy');
+        pre.focus();
+        updateCopyButton(button);
+
+
+        function updateCopyButton (button) {
+            id = button.attr('data-command');
+            button.removeClass('fa-clone').addClass('fa-check');
+
+            // Clear timeout
+            if (id in timeouts) {
+                clearTimeout(timeouts[id]);
+            }
+            timeouts[id] = window.setTimeout(function () {
+                button.removeClass('fa-check').addClass('fa-clone');
+            }, 1000);
+        }
+    }
+
     gitbook.events.bind('start', function (e, pluginConfig) {
         config = initPlugin(pluginConfig)
-        code = new Code(config.code, $)
-        code.addCopyTextarea()
+        if (config.code && config.code.copyButtons) {
+            addCopyTextarea()
+        }
         var routerConfig = config.router
         router = new Router(routerConfig, $)
     })
@@ -129,7 +135,7 @@ require(['gitbook', 'jQuery'], function (gitbook, $) {
     gitbook.events.bind('page.change', function () {
         // 添加代码块行号
         $('pre').each(function () {
-            code.init($(this))
+            formatBlockCode($(this))
         })
         if (Object.keys(router.config).length > 0) {
             router.init()
