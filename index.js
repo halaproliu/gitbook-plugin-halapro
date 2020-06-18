@@ -51,16 +51,12 @@ module.exports = {
         css: ['plugin.css']
     },
     hooks: {
-        init: function() {
-            var pluginConfig = this.config.get('pluginsConfig')
-            config = pluginConfig.config || {}
-        },
         'page:before': function (page) {
+            var config = this.config.get['pluginsConfig.config'] || {}
             page.content = insertFooter(page.content, config)
             return page
         },
         page: function(page) {
-            var config = this.config.get['pluginsConfig.config'] || {}
             page.content = insertAnchors(page.content)
             return page
         }
