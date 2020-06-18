@@ -26,6 +26,7 @@ function insertAnchors(content) {
     return $.html()
 }
 
+// insert page footer
 function insertFooter(content, config) {
     var footerConfig = config['tbfed-pagefooter'] || {}
     var label = footerConfig['modify_label'] || 'File Modify: '
@@ -38,9 +39,7 @@ function insertFooter(content, config) {
         copy +
         '<span class="footer-modification">' +
         label +
-        '\n{{file.mtime | date("' +
-        format +
-        '")}}\n</span></footer>'
+        '\n{{file.mtime | date("' + format + '")}}\n</span></footer>'
         content = content + str
     return content
 }
@@ -56,10 +55,13 @@ module.exports = {
             var pluginConfig = this.config.get('pluginsConfig')
             config = pluginConfig.config || {}
         },
+        'page:before': function (page) {
+            page.content = insertFooter(page.content, config)
+            return page
+        },
         page: function(page) {
             var config = this.config.get['pluginsConfig.config'] || {}
             page.content = insertAnchors(page.content)
-            page.content = insertFooter(page.content, config)
             return page
         }
     },
