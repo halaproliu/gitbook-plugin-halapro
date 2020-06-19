@@ -1,5 +1,6 @@
 var code, router, config
 var timeouts = {}
+const TERMINAL_HOOK = '**[terminal]'
 
 function Router (config, $) {
     this.config = config || {}
@@ -54,8 +55,21 @@ function initPlugin (pluginConfig) {
 
 require(['gitbook', 'jQuery'], function (gitbook, $) {
     function formatBlockCode (block) {
+        var terminalConfig = config.terminal || {}
+        // 添加terminal样式
+        // if (terminalConfig.style) {
+        //     block.addClass('t-' + terminalConfig.style)
+        // }
+        // if (terminalConfig.fade) {
+        //     block.addClass('t-fade')
+        // }
+
         code = block.children('code')
-        lines = code.html().split('\n')
+        // 移除terminal hooks
+        var text = code.html().replace(TERMINAL_HOOK + '\n', '')
+        // 解析命令行样式
+        text = parseTokens(text)
+        lines = text.split('\n')
 
         if (lines[lines.length - 1] == '') {
             lines.splice(-1, 1)
@@ -84,6 +98,13 @@ require(['gitbook', 'jQuery'], function (gitbook, $) {
         if (config.code && config.code.copyButtons) {
             addCopyButton(wrapper)
         }
+    }
+
+    function parseTokens (text) {
+        var regex = /\*\*\[(command|delimiter|error|path|prompt|warning) ((?:[^\]]+|\](?!\*\*|$)|)+)]/
+        return text.replace(new RegExp(regex, 'gm'), function (match, token, value) {
+            return '<span class="t-' + token + '">' + value + '</span>';
+        });
     }
 
     function addCopyButton (wrapper) {
