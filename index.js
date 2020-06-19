@@ -69,7 +69,7 @@ module.exports = {
     },
     hooks: {
         'page:before': function (page) {
-            var config = this.config.get['pluginsConfig.config'] || {}
+            var config = this.config.get('pluginsConfig.config') || {}
             page.content = insertFooter(page.content, config)
             return page
         },
